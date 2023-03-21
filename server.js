@@ -8,30 +8,15 @@ const port = 3003
 // app.METHOD(PATH, HANDLER)
 
 app.get('/',homePageHandeler);
+app.get('/favourite',favPageHandeler);
+app.get('*',handleNotFoundError);
+app.post('*',handleServerError);
 
 function homePageHandeler(req,res){
-    let result={title:movieData.title,poster_path:movieData.poster_path,overview:movieData.overview};
-    // for(let i=0;i<movieData.length;i++){
-    //     result.title=movieData.title;
-    //     result.poster_path=movieData.poster_path;
-    //     result.overview=movieData.overview;
-    // };
-    //  console.log(result);
+    let result= new Movie(movieData.title,movieData.poster_path,movieData.overview);
     res.json(result);
 
 }
-
-function Movie(title,poster_path,overview){
-        this.title=title;
-        this.poster_path=poster_path;
-        this.overview=overview
-}
-
-
-
-
-
-app.get('/favourite',favPageHandeler);
 
 function favPageHandeler(req,res){
 
@@ -39,7 +24,19 @@ function favPageHandeler(req,res){
 
 }
 
+function handleNotFoundError(req,res){
+    res.status(404).send("page not found error")
+}
 
+ function handleServerError(req, res) {
+    res.status(500).send(new Error())
+  }
+
+function Movie(title,poster_path,overview){
+    this.title=title;
+    this.poster_path=poster_path;
+    this.overview=overview
+}
 
 
 
