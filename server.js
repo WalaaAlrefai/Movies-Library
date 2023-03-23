@@ -3,13 +3,11 @@ const express = require('express')
 const cors=require("cors")
 const movieData=require('./data.json');
 const axios = require('axios');
-
 const app = express()
-
-
 app.use(cors());
 require('dotenv').config();
-const port =5000;
+const port =process.env.port;
+const apiKey = process.env.apiKey;
 
 // app.METHOD(PATH, HANDLER)
 
@@ -17,15 +15,12 @@ const port =5000;
 
 app.get('/',homePageHandeler);
 app.get('/favourite',favPageHandeler);
-
-
 app.get('/trending',trendingPageHandler);
 app.get('/search',searchQueryHandeler);
-app.get('/details',getDetails);
-app.get('/language',languageQueryHandeler)
-
+app.get('/top_rated',getTopRated);
+app.get('/popular',popularHandeler)
 app.get('*',handleNotFoundError);
-// app.post('*',handleServerError);
+app.use(handleServerError);
 
 
 function homePageHandeler(req,res){
@@ -41,7 +36,7 @@ function favPageHandeler(req,res){
 }
 
 function trendingPageHandler(req,res){
-    let url='https://api.themoviedb.org/3/trending/all/week?api_key=37ddc7081e348bf246a42f3be2b3dfd0&language=en-US'
+    let url=`https://api.themoviedb.org/3/trending/all/week?api_key=${apiKey}&language=en-US`
     axios.get(url)
     .then((result)=>{
         console.log(result.data.results);
@@ -51,55 +46,61 @@ function trendingPageHandler(req,res){
         )
         res.json(dataMovies);
     })
-    .catch((err)=>{
-        console.log(err);
+    .catch((error)=>{
+        handleServerError(error,req, res)
     })
 }
 function searchQueryHandeler(req,res){
     let movieName=req.query.name
     console.log(movieName);
 
-     let url=`https://api.themoviedb.org/3/search/movie?api_key=668baa4bb128a32b82fe0c15b21dd699&language=en-US&query=${movieName}&page=2`
+     let url=`https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&language=en-US&query=${movieName}&page=2`
      axios.get(url)
      .then((result)=>{
           let response=result.data.results;
           console.log(response)
-          res.send(response)
+          let searchMovies=response.map((movie)=>{
+            return new Movie(movie.id,movie.title,movie.release_date,movie.poster_path,movie.overview);
+        })
+          res.send(searchMovies)
      })
-     .catch((err)=>{
-        console.log(err);
+     .catch((error)=>{
+        handleServerError(error,req, res)
      })
 }
 
-function getDetails(req,res){
+function getTopRated(req,res){
 
-    let movieDetails=req.query.id;
-    console.log(movieDetails);
-    let url=`https://api.themoviedb.org/3/movie/343611?api_key=480a4f9c69e936f6485bd275ec3e6327&append_to_response=videos`
+    let url=`https://api.themoviedb.org/3/movie/top_rated?api_key=${apiKey}&language=en-US&page=1`
     axios.get(url)
     .then((result)=>{
-        let response=result.data.videos;
-        console.log(result.data.videos);
-        res.send(response);
+        console.log(result.data.results);
+        let topMovies=result.data.results.map((movie)=>{
+            return new Top(movie.title,movie.overview);
+        }
+        )
+        res.json(topMovies);
     })
-    .catch((err)=>{
-        console.log(err);
+    .catch((error)=>{
+        handleServerError(error,req, res)
     })
 
 }
 
-function languageQueryHandeler(req,res){
-    let movieLanguage=req.query.language;
-    console.log(movieLanguage);
-    let url=`https://api.themoviedb.org/3/movie/76341?api_key=480a4f9c69e936f6485bd275ec3e6327&language=de`
+function popularHandeler(req,res){
+    let url=`https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}&language=en-US`
     axios.get(url)
         .then((result)=>{
-            let response=result.data.spoken_languages;
-            console.log(result.data.spoken_languages);
-            res.send(response);
+            let moviePopular=result.data.results;
+            console.log(moviePopular);
+            let popMovies=moviePopular.map((movie)=>{
+                return new Popularity(movie.title,movie.original_language,movie.popularity);
+            })
+            console.log(popMovies);
+            res.send(popMovies);
         })
-        .catch((err)=>{
-            console.log(err);
+        .catch((error)=>{
+            handleServerError(error,req, res);
         })
     }
 
@@ -108,9 +109,9 @@ function handleNotFoundError(req,res){
     res.status(404).send("page not found error")
 }
 
-//  function handleServerError(req, res) {
-//     res.status(500).send(new Error())
-//   }
+ function handleServerError(err,req, res) {
+    res.status(500).send({status:500,responseText:"Sorry, something went wrong"});
+  }
 
 
 
@@ -119,6 +120,17 @@ function Movie(id,title,release_date,poster_path,overview){
     this.title=title;
     this.release_date=release_date;
     this.poster_path=poster_path;
+    this.overview=overview
+}
+
+function Popularity(title,original_language,popularity){
+    this.title=title;
+    this.original_language=original_language;
+    this.popularity=popularity;
+}
+
+function Top(title,overview){
+    this.title=title;
     this.overview=overview
 }
 
