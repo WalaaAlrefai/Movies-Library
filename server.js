@@ -6,6 +6,13 @@ const axios = require('axios');
 const app = express()
 app.use(cors());
 require('dotenv').config();
+const bodyParser=require('body-parser');
+app.use(bodyParser.urlencoded({extended:false}));
+app.use(bodyParser.json())
+const { Client }=require('pg')
+let url=`postgres://student:0000@localhost:5432/movies`
+const client=new Client(url)
+
 const port =process.env.port;
 const apiKey = process.env.apiKey;
 
@@ -18,9 +25,17 @@ app.get('/favourite',favPageHandeler);
 app.get('/trending',trendingPageHandler);
 app.get('/search',searchQueryHandeler);
 app.get('/top_rated',getTopRated);
-app.get('/popular',popularHandeler)
+app.get('/popular',popularHandeler);
+app.post('/addMovie',addMovieHandler)
 app.get('*',handleNotFoundError);
 app.use(handleServerError);
+
+
+client.connect().then(()=>{
+    app.listen(port, () => {
+        console.log(`Example app listening on port ${port}`)})
+}).catch()
+
 
 
 function homePageHandeler(req,res){
@@ -28,6 +43,23 @@ function homePageHandeler(req,res){
     res.json(result);
 
 }
+
+
+
+function addMovieHandler(req,res){
+    console.log(req.body);
+let{title,release_date,poster_path,overview}=req.body;
+console.log(title,release_date,poster_path,overview)
+let sql=`INSERT INTO movies(title,release_date,poster_path,overview)
+ VALUES ($1,$2,$3,$4);`
+let values=[title,release_date,poster_path,overview]
+client.query(sql,values).then(
+    res.status(201).send("data successfully saved in db to server")
+).catch()
+
+    res.send('data recieved to server');
+}
+
 
 function favPageHandeler(req,res){
 
@@ -135,10 +167,3 @@ function Top(title,overview){
 }
 
 
-
-// app.get('/', (req, res) => {
-//   res.send('Hello World!')
-// })
-
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)})
