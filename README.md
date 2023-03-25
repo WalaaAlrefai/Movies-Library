@@ -7,6 +7,7 @@
 ## WRRC
 ![WRRC](./assets/f80bec90-3e2c-4cc7-8064-814beb2e11ba.jpg)
 ![WRRC](./assets/069d4191-1138-4587-9df2-e4024d643049.jpg)
+![WRRC](./assets/448729e1-0b04-4959-b7d0-4692194dd145.jpg)
 
 ## Overview
 
