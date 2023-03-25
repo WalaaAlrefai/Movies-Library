@@ -27,6 +27,7 @@ app.get('/search',searchQueryHandeler);
 app.get('/top_rated',getTopRated);
 app.get('/popular',popularHandeler);
 app.post('/addMovie',addMovieHandler)
+app.get('/getMovies',getMoviesHandeler);
 app.get('*',handleNotFoundError);
 app.use(handleServerError);
 
@@ -47,17 +48,25 @@ function homePageHandeler(req,res){
 
 
 function addMovieHandler(req,res){
-    console.log(req.body);
+    // console.log(req.body);
 let{title,release_date,poster_path,overview}=req.body;
-console.log(title,release_date,poster_path,overview)
-let sql=`INSERT INTO movies(title,release_date,poster_path,overview)
+// console.log(title,release_date,poster_path,overview)
+let sql=`INSERT INTO movie(title,release_date,poster_path,overview)
  VALUES ($1,$2,$3,$4);`
 let values=[title,release_date,poster_path,overview]
 client.query(sql,values).then(
     res.status(201).send("data successfully saved in db to server")
 ).catch()
 
-    res.send('data recieved to server');
+    // res.send('data recieved to server');
+}
+
+function getMoviesHandeler(req,res){
+    let sql=`SELECT * FROM movie;`
+    client.query(sql).then((result)=>{
+        console.log(result);
+        res.json(result.rows)
+    })
 }
 
 
