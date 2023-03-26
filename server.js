@@ -49,14 +49,16 @@ function homePageHandeler(req,res){
 
 function addMovieHandler(req,res){
     // console.log(req.body);
-let{title,release_date,poster_path,overview}=req.body;
+let{title,release_date,poster_path,overview,comment}=req.body;
 // console.log(title,release_date,poster_path,overview)
-let sql=`INSERT INTO movie(title,release_date,poster_path,overview)
- VALUES ($1,$2,$3,$4);`
-let values=[title,release_date,poster_path,overview]
-client.query(sql,values).then(
-    res.status(201).send("data successfully saved in db to server")
-).catch()
+let sql=`INSERT INTO movie(title,release_date,poster_path,overview,comment)
+ VALUES ($1,$2,$3,$4,$5) RETURNING *;`
+let values=[title,release_date,poster_path,overview,comment]
+client.query(sql,values).then((result)=>{
+    res.status(201).json(result.rows);
+    // console.log(result);
+})
+.catch()
 
     // res.send('data recieved to server');
 }
