@@ -3,13 +3,18 @@ const express = require('express')
 const cors=require("cors")
 const movieData=require('./data.json');
 const axios = require('axios');
-
 const app = express()
-
-
 app.use(cors());
 require('dotenv').config();
-const port =5000;
+const bodyParser=require('body-parser');
+app.use(bodyParser.urlencoded({extended:false}));
+app.use(bodyParser.json())
+const { Client }=require('pg')
+let url=`postgres://student:0000@localhost:5432/movies`
+const client=new Client(url)
+
+const port =process.env.port;
+const apiKey = process.env.apiKey;
 
 // app.METHOD(PATH, HANDLER)
 
@@ -17,15 +22,21 @@ const port =5000;
 
 app.get('/',homePageHandeler);
 app.get('/favourite',favPageHandeler);
-
-
 app.get('/trending',trendingPageHandler);
 app.get('/search',searchQueryHandeler);
-app.get('/details',getDetails);
-app.get('/language',languageQueryHandeler)
-
+app.get('/top_rated',getTopRated);
+app.get('/popular',popularHandeler);
+app.post('/addMovie',addMovieHandler)
+app.get('/getMovies',getMoviesHandeler);
 app.get('*',handleNotFoundError);
-// app.post('*',handleServerError);
+app.use(handleServerError);
+
+
+client.connect().then(()=>{
+    app.listen(port, () => {
+        console.log(`Example app listening on port ${port}`)})
+}).catch()
+
 
 
 function homePageHandeler(req,res){
@@ -34,6 +45,33 @@ function homePageHandeler(req,res){
 
 }
 
+
+
+function addMovieHandler(req,res){
+    // console.log(req.body);
+let{title,release_date,poster_path,overview,comment}=req.body;
+// console.log(title,release_date,poster_path,overview)
+let sql=`INSERT INTO movie(title,release_date,poster_path,overview,comment)
+ VALUES ($1,$2,$3,$4,$5) RETURNING *;`
+let values=[title,release_date,poster_path,overview,comment]
+client.query(sql,values).then((result)=>{
+    res.status(201).json(result.rows);
+    // console.log(result);
+})
+.catch()
+
+    // res.send('data recieved to server');
+}
+
+function getMoviesHandeler(req,res){
+    let sql=`SELECT * FROM movie;`
+    client.query(sql).then((result)=>{
+        console.log(result);
+        res.json(result.rows)
+    })
+}
+
+
 function favPageHandeler(req,res){
 
     res.send('Welcome to Favorite Page');
@@ -41,7 +79,7 @@ function favPageHandeler(req,res){
 }
 
 function trendingPageHandler(req,res){
-    let url='https://api.themoviedb.org/3/trending/all/week?api_key=37ddc7081e348bf246a42f3be2b3dfd0&language=en-US'
+    let url=`https://api.themoviedb.org/3/trending/all/week?api_key=${apiKey}&language=en-US`
     axios.get(url)
     .then((result)=>{
         console.log(result.data.results);
@@ -51,55 +89,61 @@ function trendingPageHandler(req,res){
         )
         res.json(dataMovies);
     })
-    .catch((err)=>{
-        console.log(err);
+    .catch((error)=>{
+        handleServerError(error,req, res)
     })
 }
 function searchQueryHandeler(req,res){
     let movieName=req.query.name
     console.log(movieName);
 
-     let url=`https://api.themoviedb.org/3/search/movie?api_key=668baa4bb128a32b82fe0c15b21dd699&language=en-US&query=${movieName}&page=2`
+     let url=`https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&language=en-US&query=${movieName}&page=2`
      axios.get(url)
      .then((result)=>{
           let response=result.data.results;
           console.log(response)
-          res.send(response)
+          let searchMovies=response.map((movie)=>{
+            return new Movie(movie.id,movie.title,movie.release_date,movie.poster_path,movie.overview);
+        })
+          res.send(searchMovies)
      })
-     .catch((err)=>{
-        console.log(err);
+     .catch((error)=>{
+        handleServerError(error,req, res)
      })
 }
 
-function getDetails(req,res){
+function getTopRated(req,res){
 
-    let movieDetails=req.query.id;
-    console.log(movieDetails);
-    let url=`https://api.themoviedb.org/3/movie/343611?api_key=480a4f9c69e936f6485bd275ec3e6327&append_to_response=videos`
+    let url=`https://api.themoviedb.org/3/movie/top_rated?api_key=${apiKey}&language=en-US&page=1`
     axios.get(url)
     .then((result)=>{
-        let response=result.data.videos;
-        console.log(result.data.videos);
-        res.send(response);
+        console.log(result.data.results);
+        let topMovies=result.data.results.map((movie)=>{
+            return new Top(movie.title,movie.overview);
+        }
+        )
+        res.json(topMovies);
     })
-    .catch((err)=>{
-        console.log(err);
+    .catch((error)=>{
+        handleServerError(error,req, res)
     })
 
 }
 
-function languageQueryHandeler(req,res){
-    let movieLanguage=req.query.language;
-    console.log(movieLanguage);
-    let url=`https://api.themoviedb.org/3/movie/76341?api_key=480a4f9c69e936f6485bd275ec3e6327&language=de`
+function popularHandeler(req,res){
+    let url=`https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}&language=en-US`
     axios.get(url)
         .then((result)=>{
-            let response=result.data.spoken_languages;
-            console.log(result.data.spoken_languages);
-            res.send(response);
+            let moviePopular=result.data.results;
+            console.log(moviePopular);
+            let popMovies=moviePopular.map((movie)=>{
+                return new Popularity(movie.title,movie.original_language,movie.popularity);
+            })
+            console.log(popMovies);
+            res.send(popMovies);
         })
-        .catch((err)=>{
-            console.log(err);
+        .catch((error)=>{
+            handleServerError(error,req, res);
         })
     }
 
@@ -108,9 +152,9 @@ function handleNotFoundError(req,res){
     res.status(404).send("page not found error")
 }
 
-//  function handleServerError(req, res) {
-//     res.status(500).send(new Error())
-//   }
+ function handleServerError(err,req, res) {
+    res.status(500).send({status:500,responseText:"Sorry, something went wrong"});
+  }
 
 
 
@@ -122,11 +166,15 @@ function Movie(id,title,release_date,poster_path,overview){
     this.overview=overview
 }
 
+function Popularity(title,original_language,popularity){
+    this.title=title;
+    this.original_language=original_language;
+    this.popularity=popularity;
+}
+
+function Top(title,overview){
+    this.title=title;
+    this.overview=overview
+}
 
 
-// app.get('/', (req, res) => {
-//   res.send('Hello World!')
-// })
-
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)})
