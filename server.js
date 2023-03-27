@@ -28,6 +28,9 @@ app.get('/top_rated',getTopRated);
 app.get('/popular',popularHandeler);
 app.post('/addMovie',addMovieHandler)
 app.get('/getMovies',getMoviesHandeler);
+app.put('/UPDATE/:id',updateMovieHandler);
+app.delete('/DELETE/:id',deleteMovieHandler);
+app.get('/getMovie/:id',getSpecificMovie);
 app.get('*',handleNotFoundError);
 app.use(handleServerError);
 
@@ -44,7 +47,6 @@ function homePageHandeler(req,res){
     res.json(result);
 
 }
-
 
 
 function addMovieHandler(req,res){
@@ -71,6 +73,40 @@ function getMoviesHandeler(req,res){
     })
 }
 
+function updateMovieHandler(req,res){
+    // console.log(req.params);
+    let movieId=req.params.id;
+    let {comment}=req.body;
+    let values=[comment,movieId]
+    let sql=`UPDATE movie SET comment=$1 WHERE id=$2 RETURNING *;`;
+    client.query(sql,values).then((result)=>{
+        console.log(result.rows);
+    res.send("updated")}).catch()
+}
+
+function deleteMovieHandler(req,res){
+    let {id}=req.params;
+    let sql=`DELETE FROM movie WHERE id=$1;`
+    let value=[id];
+    client.query(sql,value).then(result=>{
+        console.log(result);
+        res.send.status(204).res("deleted");
+
+    })
+    .catch();
+}
+
+function getSpecificMovie(req,res){
+    let movieId=req.params.id;
+    let value=[movieId];
+    let sql=`SELECT *
+    FROM movie WHERE id=$1;`
+    client.query(sql,value).then((result)=>{
+        // console.log(result);
+        res.json(result.rows)
+    })
+
+}
 
 function favPageHandeler(req,res){
 
@@ -90,7 +126,7 @@ function trendingPageHandler(req,res){
         res.json(dataMovies);
     })
     .catch((error)=>{
-        handleServerError(error,req, res)
+        handleServerError(error,req, res);
     })
 }
 function searchQueryHandeler(req,res){
