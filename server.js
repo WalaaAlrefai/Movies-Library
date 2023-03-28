@@ -10,14 +10,13 @@ const bodyParser=require('body-parser');
 app.use(bodyParser.urlencoded({extended:false}));
 app.use(bodyParser.json())
 const { Client }=require('pg')
-let url=`postgres://student:0000@localhost:5432/movies`
+let url=process.env.url;
 const client=new Client(url)
 
 const port =process.env.port;
 const apiKey = process.env.apiKey;
 
 // app.METHOD(PATH, HANDLER)
-
 
 
 app.get('/',homePageHandeler);
@@ -90,7 +89,7 @@ function deleteMovieHandler(req,res){
     let value=[id];
     client.query(sql,value).then(result=>{
         console.log(result);
-        res.send.status(204).res("deleted");
+        res.status(204).send("deleted");
 
     })
     .catch();
@@ -141,7 +140,7 @@ function searchQueryHandeler(req,res){
           let searchMovies=response.map((movie)=>{
             return new Movie(movie.id,movie.title,movie.release_date,movie.poster_path,movie.overview);
         })
-          res.send(searchMovies)
+          res.json(searchMovies)
      })
      .catch((error)=>{
         handleServerError(error,req, res)
