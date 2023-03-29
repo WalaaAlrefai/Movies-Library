@@ -8,6 +8,7 @@
 ![WRRC](./assets/f80bec90-3e2c-4cc7-8064-814beb2e11ba.jpg)
 ![WRRC](./assets/069d4191-1138-4587-9df2-e4024d643049.jpg)
 ![WRRC](./assets/448729e1-0b04-4959-b7d0-4692194dd145.jpg)
+![WRRC](./assets/61732980-daec-4e5a-b6d3-8673764d3e23.jpg)
 
 ## Overview
 
@@ -28,6 +29,8 @@ else well catch the error and send error details.<br>
 `npm install body-parser`
 8. this process demanded to create Database and table and make connection between each other. connect my schema which contans the design of my table with the DB by using `psql -d movies -f schema.sql`<br> 
 
+9.today i used Params to modify,delete and add spicific movie from DB.
+
 
 
 
@@ -41,5 +44,7 @@ and sending the required response  to the client.
 
 
 Lab 13 is For Creating DB and Table connect between them and do save and get Data from the database.
+
+Lab 14 i used Params to modify,delete and add spicific movie from DB.
 
 <!-- What are the features included in you app -->
