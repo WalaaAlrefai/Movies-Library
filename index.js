@@ -10,10 +10,10 @@ const bodyParser=require('body-parser');
 app.use(bodyParser.urlencoded({extended:false}));
 app.use(bodyParser.json())
 const { Client }=require('pg')
-let url=process.env.url;
+let url=process.env.DATABASE_URL;
 const client=new Client(url)
 
-const port =process.env.port;
+const port =process.env.PORT;
 const apiKey = process.env.apiKey;
 
 // app.METHOD(PATH, HANDLER)
